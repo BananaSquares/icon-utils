@@ -1,7 +1,9 @@
 
-//! # Icon Transaction Serializer
-//! `icon_transaction_serializer` is a library for serializing structs to the transaction format for the icon network.
-
+//! #   Icon Utils
+//! `icon_utils` is a library for serializing and signing transactions for the icon network.
+pub mod serializer {
+    //! # Icon Transaction Serializer
+    //! `serializer` is a module for serializing structs to the transaction format for the icon network.
     use serde::{ser, Serialize};
     use thiserror::Error;
 #[derive(Error, Debug)]
@@ -379,4 +381,63 @@ impl<'a> ser::SerializeStructVariant for &'a mut Serializer {
         self.output += "}}";
         Ok(())
     }
+}
+}
+pub mod wallet {
+    //! # Icon Wallet
+    //! `wallet` is a module for ICON wallets, and transaction signing.
+    use std::path::PathBuf;
+
+use k256::{ecdsa::{SigningKey, recoverable, VerifyingKey, signature::Signer}, EncodedPoint, schnorr::signature::{hazmat::PrehashSigner, Signature}};
+use sha3::Sha3_256;
+use sha3::Digest;
+use eth_keystore::{decrypt_key,encrypt_key,new};
+pub struct Wallet {
+    pub privkey: SigningKey,
+    pub pubkey: VerifyingKey
+}
+impl Wallet {
+    /// Creates a wallet from a hex private key
+///
+/// # Example
+/// 
+///  ```
+/// let wallet = wallet::Wallet::new("68ee9ca94b71c42ba79375b8677e29a717fb8072bcb17cd5ee288f9b77bc2894");
+/// ```
+    pub fn new(key: &str) -> Self{
+        let signingkey = SigningKey::from_bytes(&hex::decode(key).unwrap()).unwrap();
+        let verifiying_key = signingkey.verifying_key();
+        Wallet {privkey: signingkey, pubkey: verifiying_key}
+    }
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        let signingkey = SigningKey::from_bytes(bytes).unwrap();
+        let verifiying_key = signingkey.verifying_key();
+        Wallet {privkey: signingkey, pubkey: verifiying_key}
+    }
+    /// Signs a serialized transaction and returns it as a base64 String
+///
+/// # Example
+/// 
+///  ```
+/// let sig = wallet.sign("example.example");
+/// ``` 
+    pub fn sign(&self, data: &str) -> String {
+        let newdata = Sha3_256::new_with_prefix(data).finalize();
+        let signature: recoverable::Signature = self.privkey.sign_prehash(&newdata).unwrap();
+        
+        return base64::encode(signature.as_ref());
+    }
+    /// Creates a wallet from a keystore and password
+///
+/// # Example
+/// 
+///  ```
+/// let wallet = wallet::Wallet::wallet_from_store(PathBuf::from("keystore.json"), "password");
+/// ```
+    pub fn wallet_from_store(path: PathBuf,password: String) -> Wallet {
+        let bytes = decrypt_key(path.as_path(), password).unwrap();
+        Wallet::from_bytes(&bytes)
+    }
+}
+
 }
