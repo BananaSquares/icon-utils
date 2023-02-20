@@ -1,0 +1,13 @@
+[package]
+name = "icon_transaction_serializer"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "A library for serializing icon transaction"
+authors = ["Ewan Fox <ewan@ewanfox.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = {version = "1.0.139", features=["derive"]}
+thiserror = "1.0"
