@@ -2,8 +2,10 @@
 //! #   Icon Utils
 //! `icon_utils` is a library for serializing and signing transactions for the icon network.
 pub mod serializer {
+    
     //! # Icon Transaction Serializer
     //! `serializer` is a module for serializing structs to the transaction format for the icon network.
+    use icon_derive::Transaction;
     use serde::{ser, Serialize};
     use thiserror::Error;
 #[derive(Error, Debug)]
@@ -17,14 +19,15 @@ impl serde::ser::Error for SerializeError {
     }
 }
 
+
+pub trait Transaction {
+    type Params;
+    fn params(&self) -> &Self::Params;
+    fn method(&self) -> &String;
+}
+
 pub struct Serializer {
     output: String
-}
-fn rem_first_and_last(value: &str) -> &str {
-    let mut chars = value.chars();
-    chars.next();
-    chars.next_back();
-    chars.as_str()
 }
 /// Converts any struct to transaction format for the icon network.
 ///
@@ -33,13 +36,17 @@ fn rem_first_and_last(value: &str) -> &str {
 ///  ```
 /// println!("{}", serialize_string(&ExampleStruct { a: 1, b: 2 }).unwrap());
 /// ```
-pub fn serialize_string<T>(value: &T) -> Result<String, SerializeError>
+pub fn serialize_string<T>(value: T) -> Result<String, SerializeError>
 where
     T: Serialize,
+    T: Transaction + for<'a> Transaction,
+    T::Params: Serialize,
 {
+    let params: &<T as Transaction>::Params = value.params();
+    
     let mut serializer = Serializer { output: String::new() };
-    value.serialize(&mut serializer)?;
-    Ok(rem_first_and_last(&serializer.output).to_string())
+    params.serialize(&mut serializer)?;
+    Ok(value.method().to_owned() + ".params." + &serializer.output.to_owned())
 }
 impl<'a> ser::Serializer for &'a mut Serializer {
     type Ok = ();

@@ -12,6 +12,7 @@ repository = "https://github.com/BananaSquares/icon-utils"
 base64 = "0.21.0"
 eth-keystore = "0.5.0"
 hex = "0.4.3"
+icon_derive = { version = "0.1.0", path = "icon_derive" }
 k256 = {version = "0.11.6", features = ["ecdsa", "sha256"]}
 serde = {version = "1.0.139", features=["derive"]}
 sha3 = "0.10.6"
