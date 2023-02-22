@@ -1,14 +1,19 @@
-use darling::FromDeriveInput;
 use proc_macro::{TokenStream};
 use quote::quote;
 use syn::{parse_macro_input,DeriveInput};
-use syn::parse::Parser;
-#[derive(FromDeriveInput, Default)]
-#[darling(attributes(params))]
-struct Params {
-    e: String
-}
 
+
+/// Macro used by icon-utils for deriving the Transaction 
+/// 
+/// # Example
+/// ```
+/// #[derive(Transaction)]
+/// #[sort]
+/// struct ExampleTransaction {
+///     method: String,
+///     params: ExampleParams
+/// }
+/// ```
 #[proc_macro_derive(Transaction)]
 pub fn transaction(input: TokenStream) -> TokenStream {
     let DeriveInput {ident, attrs, mut data,    ..} = parse_macro_input!(input as DeriveInput);
@@ -31,6 +36,17 @@ pub fn transaction(input: TokenStream) -> TokenStream {
     };
     output.into()
 }
+/// Macro used by icon-utils for sorting the fields of a struct alphabetically
+/// 
+/// # Example
+/// ```
+/// #[derive(Transaction)]
+/// #[sort]
+/// struct ExampleTransaction {
+///     method: String,
+///     params: ExampleParams
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn sort(_args: TokenStream, input: TokenStream) -> TokenStream{
     let mut ast = parse_macro_input!(input as syn::DeriveInput);

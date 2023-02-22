@@ -9,6 +9,7 @@ pub mod serializer {
     use serde::{ser, Serialize};
     use thiserror::Error;
 #[derive(Error, Debug)]
+// Error struct for Serialization
 pub enum SerializeError {
     #[error("Failed to serialize")]
     FailedToSerialize(String)
@@ -19,24 +20,42 @@ impl serde::ser::Error for SerializeError {
     }
 }
 
-
+/// Trait required for transaction serializing, can be implemented or derived with the icon_derive crate.
+/// If your struct params aren't in alphabetical order, use the sort attribute on the struct. Sub-structs should do this as well.
+/// # Example
+/// ```
+/// #[derive(Transaction)]
+/// #[sort]
+/// struct ExampleTransaction {
+///     method: String,
+///     params: ExampleParams
+/// }
+/// ```
 pub trait Transaction {
     type Params;
     fn params(&self) -> &Self::Params;
     fn method(&self) -> &String;
 }
-
+/// The serializer itself
+/// Should not be used directly except in special cases, use the serialize_to_string function instead.
 pub struct Serializer {
     output: String
 }
 /// Converts any struct to transaction format for the icon network.
-///
+/// Params must also implement the Serialize trait from serde.
+/// 
 /// # Example
 /// 
 ///  ```
-/// println!("{}", serialize_string(&ExampleStruct { a: 1, b: 2 }).unwrap());
+/// #[derive(Transaction)]
+/// #[sort]
+/// struct ExampleTransaction {
+///     method: String,
+///     params: ExampleParams
+/// }
+/// println!("{}", serialize_to_string(&ExampleTransaction {method: "yo".to_string(), params: ExampleParams{}}).unwrap();
 /// ```
-pub fn serialize_string<T>(value: T) -> Result<String, SerializeError>
+pub fn serialize_to_string<T>(value: T) -> Result<String, SerializeError>
 where
     T: Serialize,
     T: Transaction + for<'a> Transaction,
